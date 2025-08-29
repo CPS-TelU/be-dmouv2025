@@ -1,0 +1,13 @@
+services:
+  app:
+    container_name: dmouv-app
+    build: .
+    ports:
+      - "2000:2000"
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/usr/src/app/src
