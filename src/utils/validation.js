@@ -73,15 +73,14 @@ export const resetPasswordValidation = [
 ];
 
 export const deviceOnboardingValidation = [
-  body("ip_address").isIP().withMessage("Please provide a valid IP address"),
-  body("wifi_ssid")
-    .isLength({ min: 1, max: 100 })
-    .withMessage("WiFi SSID must be between 1 and 100 characters"),
-  body("wifi_password")
-    .isLength({ min: 8, max: 255 })
-    .withMessage("WiFi password must be between 8 and 255 characters"),
+  body("uniqueId")
+    .notEmpty()
+    .withMessage("Device uniqueId is required")
+    .isString()
+    .withMessage("uniqueId must be a string")
+    .isLength({ min: 3, max: 50 })
+    .withMessage("uniqueId must be between 3 and 50 characters"),
 ];
-
 export const getHistoryValidation = [
   query("page")
     .optional()
