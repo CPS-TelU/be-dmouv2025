@@ -14,6 +14,7 @@ export const getSensorHistory = async (queryParams) => {
     dateTo,
     sortBy = "createdAt",
     sortOrder = "desc",
+    search,
   } = queryParams;
 
   const pageNum = parseInt(page);
@@ -32,6 +33,15 @@ export const getSensorHistory = async (queryParams) => {
     whereClause.createdAt = {};
     if (dateFrom) whereClause.createdAt.gte = new Date(dateFrom);
     if (dateTo) whereClause.createdAt.lte = new Date(dateTo);
+  }
+
+  if (search) {
+    whereClause.device = {
+      deviceName: {
+        contains: search,
+        mode: "insensitive",
+      },
+    };
   }
 
   const [totalCount, history] = await prisma.$transaction([

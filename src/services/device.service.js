@@ -1,70 +1,79 @@
 import { prisma } from "../config/database.js";
 import { io } from "./socket.service.js";
 
-export const onboardNewDevices = async (deviceData) => {
-  const { ipAddress, wifiSsid, wifiPassword } = deviceData;
+/**
+ * Mengambil semua perangkat dari database.
+ */
+export const getAllDevices = async () => {
+  const devices = await prisma.device.findMany({
+    include: {
+      setting: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+  return devices;
+};
 
-  const existingDevices = await prisma.device.findMany({
-    where: { ipAddress },
-    include: { setting: true },
+/**
+ * @param {object} deviceData - Objek yang berisi uniqueId.
+ * @param {string} deviceData.uniqueId - ID unik dari perangkat fisik.
+ */
+export const onboardNewDevices = async (deviceData) => {
+  const { uniqueId } = deviceData;
+
+  const existingDevice = await prisma.device.findFirst({
+    where: { uniqueId },
   });
 
-  if (existingDevices.length > 0) {
-    console.log(
-      `Device with IP ${ipAddress} already exists. Returning existing devices.`
+  if (existingDevice) {
+    console.log(`Device with Unique ID ${uniqueId} already exists.`);
+    const error = new Error(
+      `Device with ID ${uniqueId} is already registered.`
     );
-
-    return { isNew: false, devices: existingDevices };
+    error.status = 409;
+    throw error;
   }
 
-  const transactionResult = await prisma.$transaction(async (tx) => {
+  const newDevices = await prisma.$transaction(async (tx) => {
     const lampDevice = await tx.device.create({
       data: {
-        deviceName: `IoT Lamp ${ipAddress}`,
+        uniqueId: uniqueId,
+        deviceName: `IoT Lamp ${uniqueId}`,
         deviceTypes: ["lamp"],
-        ipAddress: ipAddress,
-        wifiSsid: wifiSsid,
-        wifiPassword: wifiPassword,
-      },
-    });
-
-    await tx.setting.create({
-      data: {
-        deviceId: lampDevice.id,
-        scheduleEnabled: false,
-        autoModeEnabled: true,
+        setting: {
+          create: {
+            autoModeEnabled: true,
+            scheduleEnabled: false,
+          },
+        },
       },
     });
 
     const fanDevice = await tx.device.create({
       data: {
-        deviceName: `IoT Fan ${ipAddress}`,
+        uniqueId: uniqueId,
+        deviceName: `IoT Fan ${uniqueId}`,
         deviceTypes: ["fan"],
-        ipAddress: ipAddress,
-        wifiSsid: wifiSsid,
-        wifiPassword: wifiPassword,
+        setting: {
+          create: {
+            autoModeEnabled: true,
+            scheduleEnabled: false,
+          },
+        },
       },
     });
 
-    await tx.setting.create({
-      data: {
-        deviceId: fanDevice.id,
-        scheduleEnabled: false,
-        autoModeEnabled: true,
-      },
-    });
-
-    const newDevices = await tx.device.findMany({
-      where: { ipAddress: ipAddress },
+    return await tx.device.findMany({
+      where: { uniqueId: uniqueId },
       include: { setting: true },
     });
-
-    return newDevices;
   });
 
-  transactionResult.forEach((device) => {
+  newDevices.forEach((device) => {
     io?.emit("device_added", device);
   });
 
-  return { isNew: true, devices: transactionResult };
+  return { isNew: true, devices: newDevices };
 };
