@@ -17,6 +17,32 @@ export const getSensorHistory = async (queryParams) => {
     search,
   } = queryParams;
 
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
+
+  const whereClause = {};
+
+  if (deviceId) whereClause.deviceId = deviceId;
+  if (triggerType) whereClause.triggerType = triggerType;
+  if (lightStatus) whereClause.lightStatus = lightStatus;
+  if (fanStatus) whereClause.fanStatus = fanStatus;
+
+  if (lightAction) {
+    whereClause.lightAction = lightAction;
+    whereClause.device = {
+      ...whereClause.device,
+      deviceTypes: { has: "lamp" },
+    };
+  }
+
+  if (fanAction) {
+    whereClause.fanAction = fanAction;
+    whereClause.device = {
+      ...whereClause.device,
+      deviceTypes: { has: "fan" },
+    };
+  }
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
   const skip = (pageNum - 1) * limitNum;
@@ -37,6 +63,7 @@ export const getSensorHistory = async (queryParams) => {
 
   if (search) {
     whereClause.device = {
+      ...whereClause.device,
       deviceName: {
         contains: search,
         mode: "insensitive",

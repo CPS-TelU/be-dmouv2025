@@ -14,6 +14,7 @@ export const getNotifications = async (req, res, next) => {
   }
 };
 
+
 export const markAsRead = async (req, res, next) => {
   try {
     const userId = req.user.id;

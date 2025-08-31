@@ -80,7 +80,11 @@ export const uploadProfilePicture = async (req, res, next) => {
     const userId = req.user.id;
     const file = req.file;
     const token = req.token;
+
+    const result = await authService.uploadProfilePicture(userId, file, token);
+
     const result = await authService.uploadProfilePic(userId, file, token);
+
     res.status(200).json({
       message: "Profile picture uploaded successfully",
       ...result,
@@ -95,3 +99,4 @@ export const logout = (req, res, next) => {
     message: "Logout successful. Please remove the token from client storage.",
   });
 };
+

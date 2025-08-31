@@ -70,6 +70,12 @@ export const resetPasswordValidation = [
     .withMessage(
       "Password must contain at least one lowercase letter, one uppercase letter, and one number"
     ),
+  body("confirmNewPassword").custom((value, { req }) => {
+    if (value !== req.body.newPassword) {
+      throw new Error("Password confirmation does not match new password");
+    }
+    return true;
+  }),
 ];
 
 export const deviceOnboardingValidation = [

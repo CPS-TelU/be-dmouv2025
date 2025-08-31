@@ -1,9 +1,7 @@
 import { prisma } from "../config/database.js";
 import { io } from "./socket.service.js";
 
-/**
- * Mengambil semua perangkat dari database.
- */
+
 export const getAllDevices = async () => {
   const devices = await prisma.device.findMany({
     include: {
@@ -23,6 +21,22 @@ export const getAllDevices = async () => {
 export const onboardNewDevices = async (deviceData) => {
   const { uniqueId } = deviceData;
 
+  const existingDevices = await prisma.device.findMany({
+    where: { uniqueId },
+    include: { setting: true },
+  });
+
+  if (existingDevices.length > 0) {
+    console.log(
+      `Device with Unique ID ${uniqueId} already exists. Returning existing data.`
+    );
+
+    return { isNew: false, devices: existingDevices };
+  }
+
+  console.log(`Onboarding new device with Unique ID: ${uniqueId}`);
+  const newDevices = await prisma.$transaction(async (tx) => {
+    await tx.device.create({
   const existingDevice = await prisma.device.findFirst({
     where: { uniqueId },
   });
@@ -51,6 +65,8 @@ export const onboardNewDevices = async (deviceData) => {
       },
     });
 
+    await tx.device.create({
+
     const fanDevice = await tx.device.create({
       data: {
         uniqueId: uniqueId,
@@ -64,7 +80,7 @@ export const onboardNewDevices = async (deviceData) => {
         },
       },
     });
-
+    
     return await tx.device.findMany({
       where: { uniqueId: uniqueId },
       include: { setting: true },
