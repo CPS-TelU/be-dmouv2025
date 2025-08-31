@@ -1,6 +1,7 @@
 import { prisma } from "../config/database.js";
 import { io } from "./socket.service.js";
 
+
 export const getAllDevices = async () => {
   const devices = await prisma.device.findMany({
     include: {
@@ -36,6 +37,21 @@ export const onboardNewDevices = async (deviceData) => {
   console.log(`Onboarding new device with Unique ID: ${uniqueId}`);
   const newDevices = await prisma.$transaction(async (tx) => {
     await tx.device.create({
+  const existingDevice = await prisma.device.findFirst({
+    where: { uniqueId },
+  });
+
+  if (existingDevice) {
+    console.log(`Device with Unique ID ${uniqueId} already exists.`);
+    const error = new Error(
+      `Device with ID ${uniqueId} is already registered.`
+    );
+    error.status = 409;
+    throw error;
+  }
+
+  const newDevices = await prisma.$transaction(async (tx) => {
+    const lampDevice = await tx.device.create({
       data: {
         uniqueId: uniqueId,
         deviceName: `IoT Lamp ${uniqueId}`,
@@ -50,6 +66,8 @@ export const onboardNewDevices = async (deviceData) => {
     });
 
     await tx.device.create({
+
+    const fanDevice = await tx.device.create({
       data: {
         uniqueId: uniqueId,
         deviceName: `IoT Fan ${uniqueId}`,
@@ -62,7 +80,7 @@ export const onboardNewDevices = async (deviceData) => {
         },
       },
     });
-
+    
     return await tx.device.findMany({
       where: { uniqueId: uniqueId },
       include: { setting: true },

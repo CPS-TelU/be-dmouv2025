@@ -105,8 +105,7 @@ export const addOrUpdateScheduleByDevice = async (deviceId, scheduleData) => {
       include: { device: true },
     });
 
-    io?.emit("settings_updated", updatedSettings);
-
+    io?.emit("settings_updated", updatedSetting
     const deviceType = updatedSettings.device.deviceTypes?.[0]; 
     if (!deviceType) {
       console.error(
@@ -114,6 +113,8 @@ export const addOrUpdateScheduleByDevice = async (deviceId, scheduleData) => {
       );
       return updatedSettings;
     }
+
+    const deviceType = updatedSettings.device.deviceTypes[0];
     const settingsTopic = `iot/${updatedSettings.device.uniqueId}/settings/update`;
     const settingsPayload = JSON.stringify({
       device: deviceType,

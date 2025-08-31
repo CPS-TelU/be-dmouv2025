@@ -43,6 +43,17 @@ export const getSensorHistory = async (queryParams) => {
       deviceTypes: { has: "fan" },
     };
   }
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  const whereClause = {};
+  if (deviceId) whereClause.deviceId = deviceId;
+  if (triggerType) whereClause.triggerType = triggerType;
+  if (lightStatus) whereClause.lightStatus = lightStatus;
+  if (lightAction) whereClause.lightAction = lightAction;
+  if (fanStatus) whereClause.fanStatus = fanStatus;
+  if (fanAction) whereClause.fanAction = fanAction;
 
   if (dateFrom || dateTo) {
     whereClause.createdAt = {};
