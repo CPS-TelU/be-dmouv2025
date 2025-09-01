@@ -22,6 +22,7 @@ const upload = multer({
 
 // @desc    Create new user by a Super User
 // @access  Private (SUPERUSER ONLY)
+
 router.post(
   "/create-user",
   authenticateToken,
@@ -50,9 +51,5 @@ router.post(
   upload.single("profilePict"),
   authController.uploadProfilePicture
 );
-
-
-// @desc    Logout user
-router.post("/logout", authenticateToken, authController.logout);
 
 export default router;

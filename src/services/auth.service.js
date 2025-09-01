@@ -101,13 +101,45 @@ export const getUserProfile = async (userId) => {
   return user;
 };
 
+// --- [PERBAIKAN] ---
+// Fungsi ini sekarang memvalidasi password lama sebelum menggantinya.
 export const updateUserProfile = async (userId, updateData) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    const error = new Error("User not found");
+    error.status = 404;
+    throw error;
+  }
+
   const dataToUpdate = {};
+
   if (updateData.username) {
     dataToUpdate.username = updateData.username;
   }
-  if (updateData.password) {
-    dataToUpdate.password = await bcrypt.hash(updateData.password, 12);
+
+  // Logika untuk mengubah password dengan validasi
+  if (updateData.newPassword) {
+    if (!updateData.currentPassword) {
+      const error = new Error(
+        "Current password is required to set a new password."
+      );
+      error.status = 400; // Bad Request
+      throw error;
+    }
+
+    const isMatch = await bcrypt.compare(
+      updateData.currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+      const error = new Error("Incorrect current password.");
+      error.status = 401; // Unauthorized
+      throw error;
+    }
+
+    // Jika password lama cocok, hash password baru
+    dataToUpdate.password = await bcrypt.hash(updateData.newPassword, 12);
   }
 
   const updatedUser = await prisma.user.update({
@@ -125,7 +157,7 @@ export const updateUserProfile = async (userId, updateData) => {
   return updatedUser;
 };
 
-export const uploadProfilePicture = async (userId, file, token) => {
+export const uploadProfilePicture = async (userId, file) => {
   try {
     const metadata = await sharp(file.buffer).metadata();
     const maxWidth = 2048;
@@ -151,10 +183,10 @@ export const uploadProfilePicture = async (userId, file, token) => {
     where: { id: userId },
     select: { profilePict: true },
   });
+
   if (user?.profilePict) {
     const oldFileName = user.profilePict.split("/").pop();
-    const oldFilePath = `${oldFileName}`;
-    await supabase.storage.from("profile-pictures").remove([oldFilePath]);
+    await supabase.storage.from("profile-pictures").remove([oldFileName]);
   }
 
   const { error: uploadError } = await supabase.storage
