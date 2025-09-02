@@ -51,8 +51,4 @@ router.post(
   authController.uploadProfilePicture
 );
 
-
-// @desc    Logout user
-router.post("/logout", authenticateToken, authController.logout);
-
 export default router;

@@ -97,7 +97,6 @@ export const handleMotionDetection = async (uniqueId) => {
     await recordAutonomousAction(device.id, "turn_on", "motion_detected");
   }
 
-
   if (devices.length > 0) {
     io?.emit("motion_status_updated", {
       uniqueId,
@@ -105,7 +104,6 @@ export const handleMotionDetection = async (uniqueId) => {
     });
     console.log(`SOCKET EMIT: Motion detected for uniqueId: ${uniqueId}`);
   }
-
 };
 
 /**
@@ -120,7 +118,6 @@ export const handleMotionCleared = async (uniqueId) => {
     await recordAutonomousAction(device.id, "turn_off", "motion_detected");
   }
 
-
   if (devices.length > 0) {
     io?.emit("motion_status_updated", { uniqueId, motionStatus: "clear" });
     console.log(`SOCKET EMIT: Motion cleared for uniqueId: ${uniqueId}`);
@@ -131,6 +128,7 @@ export const handleMotionCleared = async (uniqueId) => {
  * @param {string} deviceId ID internal database (UUID).
  * @param {string} action Aksi yang akan dilakukan ('turn_on' atau 'turn_off').
  * @param {string} triggerType Pemicu aksi ('manual', 'scheduled').
+ * @returns {Promise<object>} State perangkat setelah aksi.
  */
 export const executeDeviceAction = async (deviceId, action, triggerType) => {
   const finalDeviceState = await prisma.$transaction(async (tx) => {
@@ -210,7 +208,7 @@ export const executeDeviceAction = async (deviceId, action, triggerType) => {
       notificationDetails = {
         type: "device_status_change",
         title: "Aksi Manual Pengguna",
-        message: `Perangkat ${finalDeviceState.deviceName} telah ${actionText} oleh pengguna. Mode otomatis dan jadwal kini dinonaktifkan.`,
+        message: `Perangkat ${finalDeviceState.deviceName} telah ${actionText}. Mode otomatis dan jadwal kini dinonaktifkan.`,
       };
       break;
   }

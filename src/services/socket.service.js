@@ -1,6 +1,5 @@
-import { Server } from "socket.io"
+import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-
 
 let io = null;
 
@@ -8,7 +7,6 @@ export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: process.env.FRONTEND_URL || "http://localhost:8081", 
-      origin: "*",
       methods: ["GET", "POST"],
     },
   });
@@ -33,8 +31,6 @@ export const initializeSocket = (server) => {
       `User connected via Socket.IO: ${socket.id}, userId: ${socket.user.userId}`
     );
 
-  io.on("connection", (socket) => {
-    console.log(`User connected via Socket.IO: ${socket.id}`);
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.id}`);
     });
